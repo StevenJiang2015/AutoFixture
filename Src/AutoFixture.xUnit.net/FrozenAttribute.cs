@@ -82,14 +82,16 @@ namespace Ploeh.AutoFixture.Xunit
 
         /// <summary>
         /// Gets a <see cref="FreezeOnMatchCustomization"/> configured
-        /// to match requests based on the <see cref="Type"/> of the parameter.
+        /// to match requests based on the <see cref="Type"/> and optionally
+        /// the name of the parameter.
         /// </summary>
         /// <param name="parameter">
         /// The parameter for which the customization is requested.
         /// </param>
         /// <returns>
         /// A <see cref="FreezeOnMatchCustomization"/> configured
-        /// to match requests based on the <see cref="Type"/> of the parameter.
+        /// to match requests based on the <see cref="Type"/> and optionally
+        /// the name of the parameter.
         /// </returns>
         public override ICustomization GetCustomization(ParameterInfo parameter)
         {
@@ -99,10 +101,11 @@ namespace Ploeh.AutoFixture.Xunit
             }
 
             var type = parameter.ParameterType;
+            var name = this.targetName ?? parameter.Name;
 
             return ShouldMatchBySpecificType()
                 ? FreezeAsType(type)
-                : FreezeByCriteria(type);
+                : FreezeByCriteria(type, name);
         }
 
         private bool ShouldMatchBySpecificType()
@@ -121,10 +124,10 @@ namespace Ploeh.AutoFixture.Xunit
 #pragma warning restore 0618
         }
 
-        private ICustomization FreezeByCriteria(Type type)
+        private ICustomization FreezeByCriteria(Type type, string name)
         {
             MatchByType(type);
-            MatchByName(type);
+            MatchByName(type, name);
             return new FreezeOnMatchCustomization(type, this.matcher);
         }
 
@@ -135,11 +138,11 @@ namespace Ploeh.AutoFixture.Xunit
             MatchByImplementedInterfaces(type);
         }
 
-        private void MatchByName(Type type)
+        private void MatchByName(Type type, string name)
         {
-            MatchByPropertyName(type);
-            MatchByParameterName(type);
-            MatchByFieldName(type);
+            MatchByPropertyName(type, name);
+            MatchByParameterName(type, name);
+            MatchByFieldName(type, name);
         }
 
         private void AlwaysMatchByExactType(Type type)
@@ -166,27 +169,39 @@ namespace Ploeh.AutoFixture.Xunit
             }
         }
 
-        private void MatchByParameterName(Type type)
+        private void MatchByParameterName(Type type, string name)
         {
             if (ShouldMatchBy(Matching.ParameterName))
             {
-                MatchBy(new ParameterSpecification(type, this.targetName));
+                MatchBy(
+                    new ParameterSpecification(
+                        type,
+                        name,
+                        StringComparer.OrdinalIgnoreCase));
             }
         }
 
-        private void MatchByPropertyName(Type type)
+        private void MatchByPropertyName(Type type, string name)
         {
             if (ShouldMatchBy(Matching.PropertyName))
             {
-                MatchBy(new PropertySpecification(type, this.targetName));
+                MatchBy(
+                    new PropertySpecification(
+                        type,
+                        name,
+                        StringComparer.OrdinalIgnoreCase));
             }
         }
 
-        private void MatchByFieldName(Type type)
+        private void MatchByFieldName(Type type, string name)
         {
             if (ShouldMatchBy(Matching.FieldName))
             {
-                MatchBy(new FieldSpecification(type, this.targetName));
+                MatchBy(
+                    new FieldSpecification(
+                        type,
+                        name,
+                        StringComparer.OrdinalIgnoreCase));
             }
         }
 
